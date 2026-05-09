@@ -1,0 +1,153 @@
+{
+  "address": "8kXsQVRs6QQNZJBMNzQCzFnyNa9SLVNAs1Y4nqMctDJT",
+  "metadata": {
+    "name": "prediction_royale",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Survival prediction game on Solana"
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "accounts": [
+        { "name": "authority", "writable": true, "signer": true },
+        { "name": "config", "writable": true, "pda": { "seeds": ["config"] } },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_room",
+      "discriminator": [203, 28, 96, 89, 238, 165, 48, 175],
+      "accounts": [
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "room", "writable": true, "pda": { "seeds": ["room", "creator"] } },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "entryFee", "type": "u64" },
+        { "name": "maxPlayers", "type": "u8" },
+        { "name": "roundDuration", "type": "i64" },
+        { "name": "isPrivate", "type": "bool" }
+      ]
+    },
+    {
+      "name": "join_room",
+      "discriminator": [124, 209, 194, 185, 111, 255, 247, 145],
+      "accounts": [
+        { "name": "player", "writable": true, "signer": true },
+        { "name": "room", "writable": true },
+        { "name": "playerData", "writable": true, "pda": { "seeds": ["player", "room", "player"] } },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "predict",
+      "discriminator": [211, 120, 254, 186, 187, 161, 93, 194],
+      "accounts": [
+        { "name": "player", "writable": true, "signer": true },
+        { "name": "room", "writable": true },
+        { "name": "playerData", "writable": true }
+      ],
+      "args": [
+        { "name": "direction", "type": { "defined": "PredictionDirection" } }
+      ]
+    },
+    {
+      "name": "resolve_round",
+      "discriminator": [12, 200, 116, 229, 23, 54, 130, 28],
+      "accounts": [
+        { "name": "keeper", "writable": true, "signer": true },
+        { "name": "room", "writable": true },
+        { "name": "pythPriceUpdate", "address": "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG" }
+      ],
+      "args": [
+        { "name": "price", "type": "u64" }
+      ]
+    },
+    {
+      "name": "claim_prize",
+      "discriminator": [134, 207, 88, 101, 119, 105, 80, 210],
+      "accounts": [
+        { "name": "winner", "writable": true, "signer": true },
+        { "name": "room", "writable": true },
+        { "name": "playerData", "writable": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [231, 231, 188, 100, 178, 66, 159, 39],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" }
+        ]
+      }
+    },
+    {
+      "name": "Room",
+      "discriminator": [244, 74, 67, 72, 208, 13, 245, 183],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "publicKey" },
+          { "name": "entryFee", "type": "u64" },
+          { "name": "maxPlayers", "type": "u8" },
+          { "name": "roundDuration", "type": "i64" },
+          { "name": "isPrivate", "type": "bool" },
+          { "name": "status", "type": { "defined": "RoomStatus" } },
+          { "name": "currentRound", "type": "u16" },
+          { "name": "roundEndTime", "type": "i64" },
+          { "name": "totalPrize", "type": "u64" },
+          { "name": "lastPrice", "type": "u64" },
+          { "name": "winner", "type": { "option": "publicKey" } },
+          { "name": "players", "type": { "vec": "publicKey" } }
+        ]
+      }
+    },
+    {
+      "name": "PlayerData",
+      "discriminator": [71, 148, 72, 150, 159, 233, 201, 24],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "room", "type": "publicKey" },
+          { "name": "lives", "type": "u8" },
+          { "name": "eliminated", "type": "bool" },
+          { "name": "currentPrediction", "type": { "option": { "defined": "PredictionDirection" } } },
+          { "name": "predictionRound", "type": "u16" },
+          { "name": "eliminationRound", "type": { "option": "u16" } }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "PredictionDirection",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Up" },
+          { "name": "Down" }
+        ]
+      }
+    },
+    {
+      "name": "RoomStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" },
+          { "name": "InProgress" },
+          { "name": "Resolved" }
+        ]
+      }
+    }
+  ]
+}
