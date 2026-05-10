@@ -1,6 +1,6 @@
 "use client";
 
-import { Room, truncateAddress } from "@/types/anchor";
+import { Room, getRoomStatusKey, truncateAddress } from "@/types/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 interface Props {
@@ -41,7 +41,7 @@ function getStatusColor(status: string): string {
 }
 
 export default function RoomCard({ room, roomPda, onJoin, isLoading }: Props) {
-  const alivePlayers = room.players.length;
+  const statusKey = getRoomStatusKey(room.status);
   const entryFeeSol = formatPrize(Number(room.entryFee));
   const totalPrizeSol = formatPrize(Number(room.totalPrize));
 
@@ -49,9 +49,9 @@ export default function RoomCard({ room, roomPda, onJoin, isLoading }: Props) {
     <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5 flex flex-col gap-3 hover:border-yale-blue-500/50 transition-colors">
       <div className="flex justify-between items-start">
         <span
-          className={`font-mono text-xs uppercase tracking-wider ${getStatusColor(room.status)}`}
+          className={`font-mono text-xs uppercase tracking-wider ${getStatusColor(statusKey)}`}
         >
-          {getStatusLabel(room.status)}
+          {getStatusLabel(statusKey)}
         </span>
         <span className="font-mono text-xs text-iron-grey-600">
           {truncateAddress(roomPda.toBase58())}
@@ -70,7 +70,7 @@ export default function RoomCard({ room, roomPda, onJoin, isLoading }: Props) {
         <div>
           <p className="text-iron-grey-600 text-xs">PLAYERS</p>
           <p className="text-white">
-            {alivePlayers}/{room.maxPlayers}
+            {room.activePlayers}/{room.maxPlayers}
           </p>
         </div>
         <div>
@@ -81,7 +81,7 @@ export default function RoomCard({ room, roomPda, onJoin, isLoading }: Props) {
 
       <button
         onClick={() => onJoin(roomPda)}
-        disabled={isLoading || room.status !== "open"}
+        disabled={isLoading || statusKey !== "open"}
         className="w-full font-mono text-sm py-3 px-4 rounded-lg border border-yale-blue-500 text-yale-blue-500 hover:bg-yale-blue-500 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-yale-blue-500"
       >
         {isLoading ? "CONFIRMANDO..." : "UNIRSE"}

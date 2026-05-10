@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { usePythPrice } from "@/hooks/usePythPrice";
 import { useRoomSubscription } from "@/hooks/useRoomSubscription";
 import { useGameActions } from "@/hooks/useGameActions";
-import { PredictionDirection } from "@/types/anchor";
+import { PredictionDirection, getPlayerDataPda } from "@/types/anchor";
 import PriceChart from "@/components/PriceChart";
 import PredictionButtons from "@/components/PredictionButtons";
 import RoundCountdown from "@/components/RoundCountdown";
@@ -38,28 +38,24 @@ export default function RoomPage({ params }: Props) {
     }
   }, [id]);
 
-  const { room, playerData } = useRoomSubscription(roomPda);
-  const { predict, claimPrize, predictStatus, claimStatus, txError } =
+  const { room, playerData, statusKey } = useRoomSubscription(roomPda);
+  const { predict, claimPrize, resolveRound, predictStatus, claimStatus, txError } =
     useGameActions(roomPda);
 
   const [selectedDirection, setSelectedDirection] =
     useState<PredictionDirection | null>(null);
-  const [roundResult] = useState<
-    "safe" | "eliminated" | "won" | null
-  >(null);
+  const [roundResult] = useState<"safe" | "eliminated" | "won" | null>(null);
   const [showResult] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
 
-  const myPlayerData = useMemo(() => {
-    return playerData;
-  }, [playerData]);
-
-  const lives = myPlayerData?.lives ?? 3;
-  const isEliminated = myPlayerData?.eliminated ?? false;
+  const lives = playerData?.lives ?? 3;
+  const isEliminated = playerData?.eliminated ?? false;
   const isWinner =
     room?.winner !== null &&
+    room?.winner !== undefined &&
     publicKey !== null &&
     room?.winner?.equals(publicKey);
+  const isCreator = publicKey && room?.creator?.equals(publicKey);
 
   const handlePredict = useCallback(
     async (direction: PredictionDirection) => {
@@ -79,6 +75,19 @@ export default function RoomPage({ params }: Props) {
   const handleClaim = useCallback(async () => {
     await claimPrize();
   }, [claimPrize]);
+
+  const handleResolve = useCallback(async () => {
+    if (!room || !roomPda) return;
+    setIsResolving(true);
+    try {
+      const playerPdas = room.players.map(
+        (p: PublicKey) => getPlayerDataPda(roomPda, p)[0]
+      );
+      await resolveRound(playerPdas);
+    } finally {
+      setIsResolving(false);
+    }
+  }, [room, roomPda, resolveRound]);
 
   if (!roomPda) {
     return (
@@ -101,7 +110,7 @@ export default function RoomPage({ params }: Props) {
             ← LOBBY
           </button>
           <h1 className="font-mono text-canary-yellow-500 text-lg font-bold tracking-wider">
-            SURVIVAL TERMINAL
+            PREDICTION ROYALE
           </h1>
           <LivesIndicator lives={lives} />
         </div>
@@ -120,32 +129,41 @@ export default function RoomPage({ params }: Props) {
             <p className="text-canary-yellow-500 font-mono text-3xl font-bold">
               {formatPrice(price?.price ?? null)}
             </p>
-            {price && (
-              <p className="text-iron-grey-600 font-mono text-xs mt-1">
-                ±${(price.confidence / 1e8).toFixed(2)}
-              </p>
-            )}
           </div>
 
-          <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5">
-            <RoundCountdown
-              endTime={room ? Number(room.roundEndTime) : 0}
-              onRoundEnd={handleRoundEnd}
-            />
-          </div>
+          {statusKey === "inProgress" && (
+            <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5">
+              <RoundCountdown
+                endTime={room ? Number(room.roundEndTime) : 0}
+                onRoundEnd={handleRoundEnd}
+              />
+            </div>
+          )}
 
-          <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5">
-            <PredictionButtons
-              onPredict={handlePredict}
-              disabled={
-                isEliminated ||
-                predictStatus === "confirmed" ||
-                isResolving
-              }
-              selected={selectedDirection}
-              confirming={predictStatus === "confirming"}
-            />
-          </div>
+          {statusKey === "inProgress" && !isEliminated && (
+            <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5">
+              <PredictionButtons
+                onPredict={handlePredict}
+                disabled={
+                  isEliminated ||
+                  predictStatus === "confirmed" ||
+                  isResolving
+                }
+                selected={selectedDirection}
+                confirming={predictStatus === "confirming"}
+              />
+            </div>
+          )}
+
+          {isCreator && statusKey === "inProgress" && (
+            <button
+              onClick={handleResolve}
+              disabled={isResolving}
+              className="w-full font-mono text-sm py-3 px-4 rounded-lg border-2 border-tiger-orange-400 text-tiger-orange-400 hover:bg-tiger-orange-400 hover:text-iron-grey-900 transition-all font-bold disabled:opacity-50"
+            >
+              {isResolving ? "RESOLVIENDO..." : "⚡ RESOLVER RONDA"}
+            </button>
+          )}
 
           <div className="bg-iron-grey-800 border border-ash-grey-700 rounded-lg p-5">
             <div className="grid grid-cols-2 gap-3 font-mono text-sm">
@@ -155,7 +173,7 @@ export default function RoomPage({ params }: Props) {
               </div>
               <div>
                 <p className="text-iron-grey-600 text-xs">JUGADORES</p>
-                <p className="text-white">{room?.players.length ?? 0}</p>
+                <p className="text-white">{room?.activePlayers ?? 0}/{room?.maxPlayers ?? 0}</p>
               </div>
               <div>
                 <p className="text-iron-grey-600 text-xs">PREMIOS</p>
@@ -169,11 +187,13 @@ export default function RoomPage({ params }: Props) {
               <div>
                 <p className="text-iron-grey-600 text-xs">ESTADO</p>
                 <p className="text-yale-blue-500">
-                  {room?.status === "inProgress"
+                  {statusKey === "inProgress"
                     ? "EN JUEGO"
-                    : room?.status === "open"
+                    : statusKey === "open"
                       ? "ESPERANDO"
-                      : "---"}
+                      : statusKey === "resolved"
+                        ? "FINALIZADA"
+                        : "---"}
                 </p>
               </div>
             </div>
@@ -195,10 +215,7 @@ export default function RoomPage({ params }: Props) {
         </div>
       )}
 
-      <RoundResultOverlay
-        result={roundResult}
-        visible={showResult}
-      />
+      <RoundResultOverlay result={roundResult} visible={showResult} />
 
       {txError && (
         <div className="fixed bottom-6 right-6 bg-iron-grey-800 border border-tiger-orange-600 rounded-lg p-4 max-w-md z-50">

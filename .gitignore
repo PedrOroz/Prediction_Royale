@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -34,3 +35,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+=======
+.anchor
+.DS_Store
+target/
+**/*.rs.bk
+node_modules/
+test-ledger
+.yarn
+.env
+dist/
+>>>>>>> 605977c (base Anchor)

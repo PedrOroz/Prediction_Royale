@@ -1,32 +1,28 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
-import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { useAnchorProviderCtx } from "@/providers";
+import { PredictionRoyale } from "@/types/prediction_royale";
 import idl from "../../idl/prediction_royale.json";
-import { PredictionRoyale } from "@/types/anchor";
+
+export type PredictionRoyaleProgram = Program<PredictionRoyale>;
 
 export function useAnchorProgram(): {
-  program: PredictionRoyale | null;
+  program: PredictionRoyaleProgram | null;
   error: string | null;
 } {
-  const wallet = useAnchorWallet();
-  const { connection } = useConnection();
+  const provider = useAnchorProviderCtx();
 
   const result = useMemo(() => {
-    if (!wallet) return { program: null, error: "Wallet not connected" };
-
+    if (!provider) return { program: null, error: "Wallet not connected" };
     try {
-      const provider = new AnchorProvider(connection, wallet, {
-        commitment: "confirmed",
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const program = new Program(idl as any, provider) as unknown as PredictionRoyale;
+      const program = new Program(idl as PredictionRoyale, provider) as unknown as PredictionRoyaleProgram;
       return { program, error: null };
     } catch (e) {
       return { program: null, error: (e as Error).message };
     }
-  }, [connection, wallet]);
+  }, [provider]);
 
   return result;
 }

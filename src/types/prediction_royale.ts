@@ -1,14 +1,20 @@
-{
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/prediction_royale.json`.
+ */
+export type PredictionRoyale = {
   "address": "5JPjbA41yGiPKSFet9rW4C3zxKss8SEZBEknDG2NJi8D",
   "metadata": {
-    "name": "prediction_royale",
+    "name": "predictionRoyale",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Survival prediction game on Solana"
   },
   "instructions": [
     {
-      "name": "claim_prize",
+      "name": "claimPrize",
       "docs": [
         "Winner claims the full prize pool. Closes room and player_data accounts."
       ],
@@ -45,13 +51,13 @@
               {
                 "kind": "account",
                 "path": "room.creator",
-                "account": "Room"
+                "account": "room"
               }
             ]
           }
         },
         {
-          "name": "player_data",
+          "name": "playerData",
           "writable": true,
           "pda": {
             "seeds": [
@@ -81,7 +87,7 @@
       "args": []
     },
     {
-      "name": "create_room",
+      "name": "createRoom",
       "docs": [
         "Create a new game room. The creator must call join_room separately."
       ],
@@ -123,25 +129,25 @@
           }
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "entry_fee",
+          "name": "entryFee",
           "type": "u64"
         },
         {
-          "name": "max_players",
+          "name": "maxPlayers",
           "type": "u8"
         },
         {
-          "name": "round_duration",
+          "name": "roundDuration",
           "type": "i64"
         },
         {
-          "name": "is_private",
+          "name": "isPrivate",
           "type": "bool"
         }
       ]
@@ -187,14 +193,14 @@
           }
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "join_room",
+      "name": "joinRoom",
       "docs": [
         "Join an existing room. Pays entry fee and creates player data."
       ],
@@ -231,13 +237,13 @@
               {
                 "kind": "account",
                 "path": "room.creator",
-                "account": "Room"
+                "account": "room"
               }
             ]
           }
         },
         {
-          "name": "player_data",
+          "name": "playerData",
           "writable": true,
           "pda": {
             "seeds": [
@@ -264,7 +270,7 @@
           }
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -307,13 +313,13 @@
               {
                 "kind": "account",
                 "path": "room.creator",
-                "account": "Room"
+                "account": "room"
               }
             ]
           }
         },
         {
-          "name": "player_data",
+          "name": "playerData",
           "writable": true,
           "pda": {
             "seeds": [
@@ -345,14 +351,14 @@
           "name": "direction",
           "type": {
             "defined": {
-              "name": "PredictionDirection"
+              "name": "predictionDirection"
             }
           }
         }
       ]
     },
     {
-      "name": "resolve_round",
+      "name": "resolveRound",
       "docs": [
         "Resolve the current round. Only the room creator (keeper) can call this.",
         "Reads the real SOL/USD price from the Pyth on-chain account.",
@@ -394,13 +400,13 @@
               {
                 "kind": "account",
                 "path": "room.creator",
-                "account": "Room"
+                "account": "room"
               }
             ]
           }
         },
         {
-          "name": "pyth_price_update"
+          "name": "pythPriceUpdate"
         }
       ],
       "args": []
@@ -408,7 +414,7 @@
   ],
   "accounts": [
     {
-      "name": "Config",
+      "name": "config",
       "discriminator": [
         155,
         12,
@@ -421,7 +427,7 @@
       ]
     },
     {
-      "name": "PlayerData",
+      "name": "playerData",
       "discriminator": [
         197,
         65,
@@ -434,7 +440,7 @@
       ]
     },
     {
-      "name": "Room",
+      "name": "room",
       "discriminator": [
         156,
         199,
@@ -450,118 +456,118 @@
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidAmount",
+      "name": "invalidAmount",
       "msg": "Invalid entry fee amount"
     },
     {
       "code": 6001,
-      "name": "InvalidMaxPlayers",
+      "name": "invalidMaxPlayers",
       "msg": "Max players must be between 2 and 10"
     },
     {
       "code": 6002,
-      "name": "InvalidRoundDuration",
+      "name": "invalidRoundDuration",
       "msg": "Round duration must be between 30 and 600 seconds"
     },
     {
       "code": 6003,
-      "name": "RoomNotOpen",
+      "name": "roomNotOpen",
       "msg": "Room is not open for joining"
     },
     {
       "code": 6004,
-      "name": "RoomFull",
+      "name": "roomFull",
       "msg": "Room is full"
     },
     {
       "code": 6005,
-      "name": "AlreadyJoined",
+      "name": "alreadyJoined",
       "msg": "Player already joined this room"
     },
     {
       "code": 6006,
-      "name": "GameNotInProgress",
+      "name": "gameNotInProgress",
       "msg": "Game is not in progress"
     },
     {
       "code": 6007,
-      "name": "PlayerEliminated",
+      "name": "playerEliminated",
       "msg": "Player has been eliminated"
     },
     {
       "code": 6008,
-      "name": "AlreadyPredicted",
+      "name": "alreadyPredicted",
       "msg": "Already submitted prediction for this round"
     },
     {
       "code": 6009,
-      "name": "RoundExpired",
+      "name": "roundExpired",
       "msg": "Round has expired, cannot predict"
     },
     {
       "code": 6010,
-      "name": "RoundNotEnded",
+      "name": "roundNotEnded",
       "msg": "Round has not ended yet"
     },
     {
       "code": 6011,
-      "name": "InvalidPriceFeed",
+      "name": "invalidPriceFeed",
       "msg": "Invalid Pyth price feed account"
     },
     {
       "code": 6012,
-      "name": "StalePriceData",
+      "name": "stalePriceData",
       "msg": "Price data is stale"
     },
     {
       "code": 6013,
-      "name": "PriceConfidenceTooWide",
+      "name": "priceConfidenceTooWide",
       "msg": "Price confidence interval too wide"
     },
     {
       "code": 6014,
-      "name": "NotEnoughPlayers",
+      "name": "notEnoughPlayers",
       "msg": "Not enough players to start"
     },
     {
       "code": 6015,
-      "name": "InvalidRoomState",
+      "name": "invalidRoomState",
       "msg": "Invalid room state for this operation"
     },
     {
       "code": 6016,
-      "name": "GameNotResolved",
+      "name": "gameNotResolved",
       "msg": "Game has not been resolved yet"
     },
     {
       "code": 6017,
-      "name": "NotWinner",
+      "name": "notWinner",
       "msg": "Only the winner can claim the prize"
     },
     {
       "code": 6018,
-      "name": "Unauthorized",
-      "msg": "Unauthorized"
+      "name": "unauthorized",
+      "msg": "unauthorized"
     },
     {
       "code": 6019,
-      "name": "MathOverflow",
+      "name": "mathOverflow",
       "msg": "Math overflow"
     },
     {
       "code": 6020,
-      "name": "InvalidPlayerAccount",
+      "name": "invalidPlayerAccount",
       "msg": "Invalid player account"
     },
     {
       "code": 6021,
-      "name": "SerializationError",
+      "name": "serializationError",
       "msg": "Serialization error"
     }
   ],
   "types": [
     {
-      "name": "Config",
+      "name": "config",
       "type": {
         "kind": "struct",
         "fields": [
@@ -577,7 +583,7 @@
       }
     },
     {
-      "name": "PlayerData",
+      "name": "playerData",
       "type": {
         "kind": "struct",
         "fields": [
@@ -598,21 +604,21 @@
             "type": "bool"
           },
           {
-            "name": "current_prediction",
+            "name": "currentPrediction",
             "type": {
               "option": {
                 "defined": {
-                  "name": "PredictionDirection"
+                  "name": "predictionDirection"
                 }
               }
             }
           },
           {
-            "name": "prediction_round",
+            "name": "predictionRound",
             "type": "u16"
           },
           {
-            "name": "elimination_round",
+            "name": "eliminationRound",
             "type": {
               "option": "u16"
             }
@@ -625,21 +631,21 @@
       }
     },
     {
-      "name": "PredictionDirection",
+      "name": "predictionDirection",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Up"
+            "name": "up"
           },
           {
-            "name": "Down"
+            "name": "down"
           }
         ]
       }
     },
     {
-      "name": "Room",
+      "name": "room",
       "type": {
         "kind": "struct",
         "fields": [
@@ -648,43 +654,43 @@
             "type": "pubkey"
           },
           {
-            "name": "entry_fee",
+            "name": "entryFee",
             "type": "u64"
           },
           {
-            "name": "max_players",
+            "name": "maxPlayers",
             "type": "u8"
           },
           {
-            "name": "round_duration",
+            "name": "roundDuration",
             "type": "i64"
           },
           {
-            "name": "is_private",
+            "name": "isPrivate",
             "type": "bool"
           },
           {
             "name": "status",
             "type": {
               "defined": {
-                "name": "RoomStatus"
+                "name": "roomStatus"
               }
             }
           },
           {
-            "name": "current_round",
+            "name": "currentRound",
             "type": "u16"
           },
           {
-            "name": "round_end_time",
+            "name": "roundEndTime",
             "type": "i64"
           },
           {
-            "name": "total_prize",
+            "name": "totalPrize",
             "type": "u64"
           },
           {
-            "name": "last_price",
+            "name": "lastPrice",
             "type": "i64"
           },
           {
@@ -704,28 +710,28 @@
             "type": "u8"
           },
           {
-            "name": "active_players",
+            "name": "activePlayers",
             "type": "u8"
           }
         ]
       }
     },
     {
-      "name": "RoomStatus",
+      "name": "roomStatus",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Open"
+            "name": "open"
           },
           {
-            "name": "InProgress"
+            "name": "inProgress"
           },
           {
-            "name": "Resolved"
+            "name": "resolved"
           }
         ]
       }
     }
   ]
-}
+};
