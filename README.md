@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prediction Royale
 
-## Getting Started
+A survival prediction game on Solana where players compete by predicting the direction of SOL/USD price movements.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Players join rooms, predict whether the price will go up or down each round, and lose lives when wrong. Last survivor claims the prize pool.
+
+## Tech Stack
+
+**Frontend:** Next.js 14, React 18, Tailwind CSS, TypeScript
+**Backend:** Solana (Anchor framework), Rust, Pyth Oracle
+**Wallet:** Solana Wallet Adapter (Phantom, Solflare)
+
+## Project Structure
+
+```
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Lobby - create/join rooms
+│   ├── room/[id]/page.tsx # Game room with predictions
+│   ├── layout.tsx         # Root layout with wallet providers
+│   └── globals.css        # Global styles + Tailwind
+├── programs/              # Anchor Solana programs
+│   └── prediction_royale/
+│       ├── src/lib.rs     # Main program logic
+│       └── Cargo.toml     # Rust dependencies
+├── src/
+│   ├── components/       # UI components (PriceChart, LivesIndicator, etc.)
+│   ├── hooks/            # Custom React hooks (useAnchorProgram, usePythPrice, etc.)
+│   ├── types/            # TypeScript types matching IDL
+│   └── providers.tsx      # Solana/Anchor wallet providers
+├── tests/                 # Anchor integration tests
+├── Anchor.toml           # Anchor workspace config
+└── Cargo.toml            # Rust workspace config
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Smart Contract
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Program ID:** `5JPjbA41yGiPKSFet9rW4C3zxKss8SEZBEknDG2NJi8D`
+- **Network:** Solana Devnet
+- **Pyth Feed:** SOL/USD on Devnet
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Instructions
 
-## Learn More
+| Instruction | Description |
+|-------------|-------------|
+| `initialize` | Initialize global config (authority only) |
+| `createRoom` | Create a new game room with entry fee and settings |
+| `joinRoom` | Join an existing room and pay entry fee |
+| `predict` | Submit UP/DOWN prediction for current round |
+| `resolveRound` | Resolve round (creator/keeper only), evaluates all predictions |
+| `claimPrize` | Winner claims the prize pool |
 
-To learn more about Next.js, take a look at the following resources:
+### Game Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Creator creates room with entry fee, max players, round duration
+2. Players join and pay entry fee
+3. When enough players joined, creator calls `resolveRound` to start
+4. Pyth price is recorded as baseline
+5. Each round: players predict, creator resolves after time expires
+6. Wrong predictions lose a life
+7. Last survivor wins the prize pool
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Setup
 
-## Deploy on Vercel
+### Prerequisites
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Node.js 18+
+- Rust 1.89+
+- Solana CLI
+- Anchor CLI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Build the Anchor program
+anchor build
+
+# Deploy to devnet (requires keypair)
+anchor deploy --provider.cluster devnet --program-name prediction_royale --program-keypair target/deploy/six_seven-keypair.json
+```
+
+### Configuration
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_PROGRAM_ID=5JPjbA41yGiPKSFet9rW4C3zxKss8SEZBEknDG2NJi8D
+NEXT_PUBLIC_PYTH_FEED=J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix
+NEXT_PUBLIC_NETWORK=devnet
+```
+
+### Running
+
+```bash
+# Development server
+npm run dev
+
+# Run tests
+anchor test
+
+# Run frontend tests
+npm test
+```
+
+## Keypair
+
+The program is deployed with the keypair at `target/deploy/six_seven-keypair.json`.
+
+## Security
+
+- Price data validated via Pyth Oracle with staleness checks
+- Confidence interval validation (>5% rejected)
+- Creator-only access for resolve_round
+- Winner-only access for claim_prize
+- CPI transfers use Anchor system_program wrapper
+
+## License
+
+MIT
